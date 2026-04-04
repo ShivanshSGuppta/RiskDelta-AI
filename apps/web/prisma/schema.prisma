@@ -1,0 +1,476 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(cuid())
+  fullName        String
+  email           String           @unique
+  companyName     String?
+  passwordHash    String
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  memberships     Membership[]
+  sessions        Session[]
+  onboardingState OnboardingState?
+  apiKeys         ApiKey[]
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Organization {
+  id               String            @id @default(cuid())
+  name             String
+  slug             String            @unique
+  tier             String
+  domain           String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  memberships      Membership[]
+  onboardingStates OnboardingState[]
+  projects         Project[]
+  integrations     Integration[]
+  policies         Policy[]
+  runtimeControls  RuntimeControl[]
+  traces           Trace[]
+  traceSessions    TraceSession[]
+  traceEvents      TraceEvent[]
+  environments     Environment[]
+  applications     Application[]
+  riskAssessments  RiskAssessment[]
+  incidents        Incident[]
+  webhookEndpoints WebhookEndpoint[]
+  apiKeys          ApiKey[]
+  auditLogs        AuditLog[]
+}
+
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+}
+
+model OnboardingState {
+  id                      String        @id @default(cuid())
+  userId                  String        @unique
+  organizationId          String?
+  projectId               String?
+  currentStep             Int           @default(1)
+  completed               Boolean       @default(false)
+  selectedIntegrationType String?
+  selectedAiStack         String?
+  framework               String?
+  environment             String?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  user                    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization            Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  project                 Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+}
+
+model Project {
+  id                     String                  @id @default(cuid())
+  organizationId         String
+  name                   String
+  slug                   String
+  description            String
+  environment            String
+  framework              String
+  provider               String
+  ownerName              String
+  riskStatus             String
+  integrationStatus      String
+  monitoringEnabled      Boolean                 @default(true)
+  lastActivity           DateTime                @default(now())
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  organization           Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  integrations           Integration[]
+  environments           Environment[]
+  applications           Application[]
+  traces                 Trace[]
+  traceSessions          TraceSession[]
+  incidents              Incident[]
+  onboardingStates       OnboardingState[]
+  projectPolicies        ProjectPolicy[]
+  projectRuntimeControls ProjectRuntimeControl[]
+
+  @@unique([organizationId, slug])
+}
+
+model Environment {
+  id             String        @id @default(cuid())
+  organizationId String
+  projectId      String?
+  name           String
+  slug           String
+  stage          String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  applications   Application[]
+  traces         Trace[]
+  traceSessions  TraceSession[]
+
+  @@unique([organizationId, slug])
+}
+
+model Application {
+  id             String        @id @default(cuid())
+  organizationId String
+  projectId      String
+  environmentId  String?
+  name           String
+  slug           String
+  framework      String?
+  provider       String?
+  status         String        @default("ACTIVE")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environment    Environment?  @relation(fields: [environmentId], references: [id], onDelete: SetNull)
+  traces         Trace[]
+  traceSessions  TraceSession[]
+
+  @@unique([organizationId, slug])
+}
+
+model Integration {
+  id             String       @id @default(cuid())
+  organizationId String
+  projectId      String?
+  name           String
+  slug           String
+  category       String
+  provider       String
+  connectionState String
+  config         Json
+  setupSteps     String[]
+  logsHint       String
+  lastCheckedAt  DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+}
+
+model Policy {
+  id             String          @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String
+  category       String
+  severity       String
+  scope          String
+  mode           String
+  tags           String[]
+  status         String
+  template       Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  versions       PolicyVersion[]
+  projectPolicies ProjectPolicy[]
+
+  @@unique([organizationId, slug])
+}
+
+model PolicyVersion {
+  id         String      @id @default(cuid())
+  policyId   String
+  version    Int
+  isActive   Boolean     @default(true)
+  definition Json
+  dsl        String
+  createdAt  DateTime    @default(now())
+  policy     Policy      @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  runs       PolicyRun[]
+
+  @@unique([policyId, version])
+}
+
+model ProjectPolicy {
+  id        String   @id @default(cuid())
+  projectId String
+  policyId  String
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  policy    Policy   @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, policyId])
+}
+
+model RuntimeControl {
+  id                     String                  @id @default(cuid())
+  organizationId         String
+  name                   String
+  slug                   String
+  moduleKey              String
+  status                 String
+  summary                String
+  config                 Json
+  recentActions          String[]
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  organization           Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectRuntimeControls ProjectRuntimeControl[]
+
+  @@unique([organizationId, slug])
+}
+
+model ProjectRuntimeControl {
+  id               String         @id @default(cuid())
+  projectId        String
+  runtimeControlId String
+  createdAt        DateTime       @default(now())
+  project          Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  runtimeControl   RuntimeControl @relation(fields: [runtimeControlId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, runtimeControlId])
+}
+
+model Trace {
+  id              String        @id @default(cuid())
+  externalId      String        @unique
+  organizationId  String
+  projectId       String
+  environmentId   String?
+  applicationId   String?
+  traceSessionId  String?
+  requestId       String
+  environment     String
+  channel         String
+  provider        String
+  model           String
+  prompt          String
+  promptPreview   String
+  context         String
+  response        String
+  responsePreview String
+  actor           String
+  ip              String
+  country         String
+  sessionId       String
+  toolSummary     String
+  desiredTargets  String[]
+  tags            String[]
+  riskScore       Float
+  confidence      Float
+  severity        String
+  verdict         String
+  blocked         Boolean       @default(false)
+  redacted        Boolean       @default(false)
+  selectedModel   String?
+  explainability  String
+  dimensionScores Json
+  runtimeActions  Json
+  signals         Json
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  environmentRef  Environment?  @relation(fields: [environmentId], references: [id], onDelete: SetNull)
+  applicationRef  Application?  @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  traceSessionRef TraceSession? @relation(fields: [traceSessionId], references: [id], onDelete: SetNull)
+  toolCalls       TraceToolCall[]
+  policyRuns      PolicyRun[]
+  riskEvents      RiskEvent[]
+  riskAssessments RiskAssessment[]
+  incident        Incident?
+}
+
+model TraceSession {
+  id             String           @id @default(cuid())
+  organizationId String
+  projectId      String?
+  environmentId  String?
+  applicationId  String?
+  externalId     String           @unique
+  actor          String?
+  status         String           @default("OPEN")
+  startedAt      DateTime         @default(now())
+  endedAt        DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project        Project?         @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  environment    Environment?     @relation(fields: [environmentId], references: [id], onDelete: SetNull)
+  application    Application?     @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  traces         Trace[]
+  events         TraceEvent[]
+  riskAssessments RiskAssessment[]
+}
+
+model TraceEvent {
+  id             String       @id @default(cuid())
+  organizationId String
+  traceSessionId String
+  eventType      String
+  payload        Json
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  traceSession   TraceSession @relation(fields: [traceSessionId], references: [id], onDelete: Cascade)
+}
+
+model TraceToolCall {
+  id        String   @id @default(cuid())
+  traceId   String
+  name      String
+  target    String
+  status    String
+  blocked   Boolean  @default(false)
+  details   Json
+  createdAt DateTime @default(now())
+  trace     Trace    @relation(fields: [traceId], references: [id], onDelete: Cascade)
+}
+
+model PolicyRun {
+  id              String        @id @default(cuid())
+  traceId         String
+  policyVersionId String
+  mode            String
+  outcome         String
+  createdAt       DateTime      @default(now())
+  trace           Trace         @relation(fields: [traceId], references: [id], onDelete: Cascade)
+  policyVersion   PolicyVersion @relation(fields: [policyVersionId], references: [id], onDelete: Cascade)
+  matches         PolicyMatch[]
+}
+
+model PolicyMatch {
+  id         String    @id @default(cuid())
+  policyRunId String
+  ruleId     String
+  title      String
+  action     String
+  weight     Float
+  condition  String
+  createdAt  DateTime  @default(now())
+  policyRun  PolicyRun @relation(fields: [policyRunId], references: [id], onDelete: Cascade)
+}
+
+model RiskEvent {
+  id          String   @id @default(cuid())
+  traceId     String
+  dimensionKey String
+  title       String
+  severity    String
+  score       Float
+  confidence  Float
+  explanation String
+  createdAt   DateTime @default(now())
+  trace       Trace    @relation(fields: [traceId], references: [id], onDelete: Cascade)
+}
+
+model RiskAssessment {
+  id             String       @id @default(cuid())
+  organizationId String
+  traceId        String?
+  traceSessionId String?
+  score          Float
+  confidence     Float
+  severity       String
+  verdict        String
+  explainability String
+  factors        Json
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  trace          Trace?       @relation(fields: [traceId], references: [id], onDelete: SetNull)
+  traceSession   TraceSession? @relation(fields: [traceSessionId], references: [id], onDelete: SetNull)
+}
+
+model Incident {
+  id               String       @id @default(cuid())
+  organizationId   String
+  projectId        String?
+  traceId          String?      @unique
+  title            String
+  slug             String       @unique
+  severity         String
+  status           String
+  summary          String
+  rootCause        String
+  remediationNotes String
+  triggerSource    String
+  assigneeName     String?
+  timeline         Json
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project          Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  trace            Trace?       @relation(fields: [traceId], references: [id], onDelete: SetNull)
+  events           IncidentEvent[]
+}
+
+model IncidentEvent {
+  id         String   @id @default(cuid())
+  incidentId String
+  eventType  String
+  message    String
+  metadata   Json
+  createdAt  DateTime @default(now())
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+}
+
+model ApiKey {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  name           String
+  prefix         String       @unique
+  secretHash     String
+  lastFour       String
+  scopes         String[]
+  lastUsedAt     DateTime?
+  revokedAt      DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WebhookEndpoint {
+  id               String       @id @default(cuid())
+  organizationId   String
+  name             String
+  url              String
+  secretCiphertext String
+  events           String[]
+  active           Boolean      @default(true)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id             String       @id @default(cuid())
+  organizationId String
+  actorName      String
+  action         String
+  targetType     String
+  targetId       String
+  metadata       Json
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}

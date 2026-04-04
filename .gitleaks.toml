@@ -1,0 +1,14 @@
+title = "RiskDelta gitleaks config"
+
+[allowlist]
+description = "Allow known non-secret development placeholders."
+paths = [
+  '''^apps/web/README\.md$''',
+  '''^README\.md$'''
+]
+
+[[rules]]
+id = "riskdelta-api-key-prefix"
+description = "RiskDelta API key prefix detector"
+regex = '''rd_(live|test|demo)_[A-Za-z0-9\-_]{20,}'''
+tags = ["key", "riskdelta"]

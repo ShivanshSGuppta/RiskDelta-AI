@@ -1,0 +1,28 @@
+{
+  "name": "riskdelta",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.6.2",
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "dev:web": "pnpm --filter @riskdelta/web dev",
+    "dev:api": "pnpm --filter @riskdelta/api dev",
+    "dev:worker": "pnpm --filter @riskdelta/worker dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "pnpm --filter @riskdelta/web test:e2e",
+    "db:seed": "pnpm --filter @riskdelta/web db:seed",
+    "db:generate": "pnpm --filter @riskdelta/web db:generate",
+    "db:push": "pnpm --filter @riskdelta/web db:push",
+    "db:migrate": "pnpm --filter @riskdelta/web db:migrate",
+    "secrets:scan": "./scripts/scan-secrets.sh",
+    "security:public-env": "node ./scripts/audit-public-env.mjs"
+  },
+  "devDependencies": {
+    "pnpm": "^10.6.2",
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  }
+}
