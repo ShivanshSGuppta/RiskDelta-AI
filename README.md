@@ -76,6 +76,26 @@ Local endpoints:
 - API: `http://localhost:4000/v1`
 - MinIO console: `http://localhost:9001`
 
+## Local UI screenshots
+
+Captured from a live local run (`localhost:3000`) to verify UI rendering and route behavior.
+
+### Landing page
+
+![RiskDelta landing page](docs/screenshots/landing-home.png)
+
+### Integrations marketing page
+
+![RiskDelta integrations page](docs/screenshots/marketing-integrations.png)
+
+### Docs preview page
+
+![RiskDelta docs preview page](docs/screenshots/marketing-docs-preview.png)
+
+### Authenticated console overview
+
+![RiskDelta console overview](docs/screenshots/app-overview.png)
+
 ## Development commands
 
 ```bash
