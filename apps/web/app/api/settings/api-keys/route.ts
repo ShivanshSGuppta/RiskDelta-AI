@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { getApiPlatformContext } from "@/server/auth/api-context";
+import { hasMinimumRole } from "@/server/auth/rbac";
 import { createApiKey, getOrganizationSettings } from "@/server/services/settings-service";
 
 export async function GET(request: Request) {
   const context = await getApiPlatformContext();
   if (!context) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasMinimumRole(context.membership?.role, "VIEWER")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const settings = await getOrganizationSettings(context.organization.id);
   const { searchParams } = new URL(request.url);
@@ -25,16 +29,19 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const context = await getApiPlatformContext();
   if (!context) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasMinimumRole(context.membership?.role, "ADMIN")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     return NextResponse.json(
       await createApiKey({
         organizationId: context.organization.id,
-        userId: context.user.id,
         input: await request.json(),
       }),
     );
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to create API key" }, { status: 400 });
+    console.error("settings.api-keys.create_failed", error);
+    return NextResponse.json({ error: "Unable to create API key" }, { status: 502 });
   }
 }

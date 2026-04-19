@@ -1,8 +1,6 @@
 import { cookies } from "next/headers";
 import { ApiKeyCreateSchema, OrganizationUpdateSchema } from "@/lib/types";
-import { prisma } from "@/server/db/prisma";
 import { SESSION_COOKIE_NAME } from "@/server/auth/session";
-import { createApiKeyRecord } from "@/server/enforcement/api-keys";
 
 function apiBaseUrl() {
   return process.env.RISKDELTA_API_URL ?? "http://localhost:4100";
@@ -44,42 +42,47 @@ async function fetchSettingsApi<T>({
   return response.json() as Promise<T>;
 }
 
-async function getOrganizationSettingsLocal(organizationId: string) {
-  const [organization, members, apiKeys, auditLogs] = await Promise.all([
-    prisma.organization.findUnique({ where: { id: organizationId } }),
-    prisma.membership.findMany({
-      where: { organizationId },
-      include: { user: true },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.apiKey.findMany({
-      where: { organizationId },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.auditLog.findMany({
-      where: { organizationId },
-      orderBy: { createdAt: "desc" },
-      take: 12,
-    }),
-  ]);
-
-  return { organization, members, apiKeys, auditLogs };
-}
-
 export async function getOrganizationSettings(organizationId: string) {
-  try {
-    const payload = await fetchSettingsApi<
-      Awaited<ReturnType<typeof getOrganizationSettingsLocal>> & {
-        docs?: { sections: Array<{ id: string; title: string; summary: string }> };
-      }
-    >({
-      path: `/v1/settings/foundation?orgId=${organizationId}`,
-      organizationId,
-    });
-    return payload;
-  } catch {
-    return getOrganizationSettingsLocal(organizationId);
-  }
+  return fetchSettingsApi<
+    {
+      organization: {
+        id: string;
+        name: string;
+        slug: string;
+        tier: string;
+        domain: string | null;
+      } | null;
+      members: Array<{
+        id: string;
+        role: string;
+        user: { id: string; fullName: string; email: string };
+      }>;
+      apiKeys: Array<{
+        id: string;
+        name: string;
+        prefix: string;
+        lastFour: string;
+        scopes: string[];
+        createdAt: string;
+        lastUsedAt: string | null;
+        revokedAt: string | null;
+        expiresAt: string | null;
+      }>;
+      auditLogs: Array<{
+        id: string;
+        actorName: string;
+        action: string;
+        targetType: string;
+        targetId: string;
+        metadata: unknown;
+        createdAt: string;
+      }>;
+      docs?: { sections: Array<{ id: string; title: string; summary: string }> };
+    }
+  >({
+    path: `/v1/settings/foundation?orgId=${organizationId}`,
+    organizationId,
+  });
 }
 
 export async function updateOrganizationSettings({
@@ -90,63 +93,54 @@ export async function updateOrganizationSettings({
   input: unknown;
 }) {
   const data = OrganizationUpdateSchema.parse(input);
-  try {
-    const payload = await fetchSettingsApi<{
-      organization: Awaited<ReturnType<typeof getOrganizationSettingsLocal>>["organization"];
-    }>({
-      path: `/v1/settings/organization?orgId=${organizationId}`,
-      organizationId,
-      method: "PATCH",
-      body: data,
-    });
-    return payload.organization;
-  } catch {
-    return prisma.organization.update({
-      where: { id: organizationId },
-      data,
-    });
-  }
+  const payload = await fetchSettingsApi<{
+    organization: {
+      id: string;
+      name: string;
+      slug: string;
+      tier: string;
+      domain: string | null;
+    } | null;
+  }>({
+    path: `/v1/settings/organization?orgId=${organizationId}`,
+    organizationId,
+    method: "PATCH",
+    body: data,
+  });
+  return payload.organization;
 }
 
 export async function createApiKey({
   organizationId,
-  userId,
   input,
 }: {
   organizationId: string;
-  userId: string;
   input: unknown;
 }) {
   const data = ApiKeyCreateSchema.parse(input);
 
-  try {
-    const payload = await fetchSettingsApi<{
-      apiKey: Awaited<ReturnType<typeof getOrganizationSettingsLocal>>["apiKeys"][number];
-      token: string;
-      revealOnce: boolean;
-    }>({
-      path: `/v1/settings/api-keys?orgId=${organizationId}`,
-      organizationId,
-      method: "POST",
-      body: data,
-    });
-    return {
-      apiKey: payload.apiKey,
-      rawKey: payload.token,
+  const payload = await fetchSettingsApi<{
+    apiKey: {
+      id: string;
+      name: string;
+      prefix: string;
+      lastFour: string;
+      scopes: string[];
+      createdAt: string;
+      expiresAt: string | null;
     };
-  } catch {
-    return prisma.$transaction(async (tx) => {
-      const { apiKey, rawKey } = await createApiKeyRecord({
-        tx,
-        organizationId,
-        userId,
-        name: data.name,
-        scopes: data.scopes,
-      });
-
-      return { apiKey, rawKey };
-    });
-  }
+    token: string;
+    revealOnce: boolean;
+  }>({
+    path: `/v1/settings/api-keys?orgId=${organizationId}`,
+    organizationId,
+    method: "POST",
+    body: data,
+  });
+  return {
+    apiKey: payload.apiKey,
+    rawKey: payload.token,
+  };
 }
 
 export async function getAuditLogs({
@@ -156,17 +150,19 @@ export async function getAuditLogs({
   organizationId: string;
   limit?: number;
 }) {
-  try {
-    const payload = await fetchSettingsApi<{ logs: Array<Awaited<ReturnType<typeof getOrganizationSettingsLocal>>["auditLogs"][number]> }>({
-      path: `/v1/audit?orgId=${organizationId}&limit=${limit}`,
-      organizationId,
-    });
-    return payload.logs;
-  } catch {
-    return prisma.auditLog.findMany({
-      where: { organizationId },
-      orderBy: { createdAt: "desc" },
-      take: Math.max(10, Math.min(limit, 250)),
-    });
-  }
+  const payload = await fetchSettingsApi<{
+    logs: Array<{
+      id: string;
+      actorName: string;
+      action: string;
+      targetType: string;
+      targetId: string;
+      metadata: unknown;
+      createdAt: string;
+    }>;
+  }>({
+    path: `/v1/audit?orgId=${organizationId}&limit=${limit}`,
+    organizationId,
+  });
+  return payload.logs;
 }

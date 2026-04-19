@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { getApiPlatformContext } from "@/server/auth/api-context";
+import { hasMinimumRole } from "@/server/auth/rbac";
 import { getOrganizationSettings, updateOrganizationSettings } from "@/server/services/settings-service";
 
 export async function GET() {
   const context = await getApiPlatformContext();
   if (!context) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasMinimumRole(context.membership?.role, "VIEWER")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const settings = await getOrganizationSettings(context.organization.id);
   return NextResponse.json(settings.organization);
@@ -13,6 +17,9 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const context = await getApiPlatformContext();
   if (!context) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasMinimumRole(context.membership?.role, "ADMIN")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     return NextResponse.json(
@@ -22,6 +29,7 @@ export async function PATCH(request: Request) {
       }),
     );
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to update organization" }, { status: 400 });
+    console.error("settings.organization.update_failed", error);
+    return NextResponse.json({ error: "Unable to update organization" }, { status: 502 });
   }
 }

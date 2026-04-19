@@ -74,7 +74,7 @@ npx pnpm dev
 Local endpoints:
 
 - Web: `http://localhost:3000`
-- API: `http://localhost:4000/v1`
+- API: `http://localhost:4100/v1`
 - MinIO console: `http://localhost:9001`
 
 ## Local UI screenshots

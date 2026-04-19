@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Activity, Bell, ChevronsUpDown, Menu, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +32,7 @@ export function AppHeader({
   onToggleCollapsed: () => void;
   onOpenMobileNav: () => void;
 }) {
+  const router = useRouter();
   const [selectedProject, setSelectedProject] = useState(projectNames[0] ?? "No project");
   const [environment, setEnvironment] = useState("production");
   const mounted = useSyncExternalStore(
@@ -159,8 +161,14 @@ export function AppHeader({
                 <Link href="/app/docs">Docs</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/api/auth/sign-out">Sign out</Link>
+              <DropdownMenuItem
+                onSelect={async (event) => {
+                  event.preventDefault();
+                  await fetch("/api/auth/sign-out", { method: "POST" });
+                  router.replace("/signin");
+                }}
+              >
+                Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
