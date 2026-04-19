@@ -11,6 +11,7 @@ Authenticated product:
 - `RiskDelta Console`
 
 This repository is published under `BUSL-1.1`. It is source-available, not open source. See [`LICENSE`](LICENSE) and [`COMMERCIAL.md`](COMMERCIAL.md).
+Plain-English license note: `BUSL-1.1` applies now; on `2029-04-05` it converts to `GPL v2.0 or later`.
 
 ## What this repo contains
 
