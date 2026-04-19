@@ -20,6 +20,11 @@ dotenv.config({ path: resolve(process.cwd(), "../../.env"), override: false });
 
 const prisma = new PrismaClient();
 
+function maskApiKey(rawKey: string) {
+  const visibleSuffix = rawKey.slice(-4);
+  return `****${visibleSuffix}`;
+}
+
 async function main() {
   await prisma.auditLog.deleteMany();
   await prisma.incidentEvent.deleteMany();
@@ -484,7 +489,7 @@ async function main() {
         metadata: {
           projects: projects.length,
           apiKeyPrefix: apiKey.prefix,
-          demoApiKey: rawKey,
+          seedApiKeyMasked: maskApiKey(rawKey),
           extraUsers: analysts.count,
         },
       },
@@ -493,8 +498,8 @@ async function main() {
 
   console.log("Seeded RiskDelta");
   console.log(`Demo user: ${owner.email}`);
-  console.log(`Demo password: ${process.env.DEMO_USER_PASSWORD ?? "RiskDeltaDemo123!"}`);
-  console.log(`Seed API key: ${rawKey}`);
+  console.log("Demo password: [redacted] (configure DEMO_USER_PASSWORD in local env)");
+  console.log(`Seed API key: [redacted], suffix=${rawKey.slice(-4)} (rotate after first use)`);
 }
 
 main()

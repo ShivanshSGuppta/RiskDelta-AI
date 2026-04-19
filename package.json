@@ -20,6 +20,11 @@
     "secrets:scan": "./scripts/scan-secrets.sh",
     "security:public-env": "node ./scripts/audit-public-env.mjs"
   },
+  "pnpm": {
+    "overrides": {
+      "lodash": "^4.18.1"
+    }
+  },
   "devDependencies": {
     "pnpm": "^10.6.2",
     "turbo": "^2.5.4",

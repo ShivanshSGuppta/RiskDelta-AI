@@ -147,11 +147,23 @@ export function SignUpForm() {
           <div className="h-px flex-1 bg-[#1b1f1b]" />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
-          <Button type="button" variant="secondary" className="h-11 justify-start rounded-none border-[#1b1f1b] bg-[#111411] hover:bg-[#111411]">
-            Google placeholder
+          <Button
+            type="button"
+            variant="secondary"
+            disabled
+            aria-disabled="true"
+            className="h-11 justify-start rounded-none border-[#1b1f1b] bg-[#111411] opacity-70"
+          >
+            Google SSO (coming soon)
           </Button>
-          <Button type="button" variant="secondary" className="h-11 justify-start rounded-none border-[#1b1f1b] bg-[#111411] hover:bg-[#111411]">
-            GitHub placeholder
+          <Button
+            type="button"
+            variant="secondary"
+            disabled
+            aria-disabled="true"
+            className="h-11 justify-start rounded-none border-[#1b1f1b] bg-[#111411] opacity-70"
+          >
+            GitHub SSO (coming soon)
           </Button>
         </div>
       </div>

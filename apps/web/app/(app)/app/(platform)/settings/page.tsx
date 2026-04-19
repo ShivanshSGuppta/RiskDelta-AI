@@ -13,7 +13,7 @@ export default async function SettingsPage() {
       <PageHeader
         eyebrow="Settings"
         title="Organization, API keys, and security posture"
-        description="Manage organization identity, runtime credentials, team access, audit visibility, and the placeholder enterprise controls reserved for a deeper backend pass."
+        description="Manage organization identity, runtime credentials, team access, and audit visibility in the source-available RiskDelta baseline."
       />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_320px]">
@@ -52,10 +52,10 @@ export default async function SettingsPage() {
 
         <ConsoleSurface className="p-4">
           <ConsoleKicker>Security posture</ConsoleKicker>
-          <p className="mt-2 text-sm text-[#a0a8a0]">Current build placeholders that stay visible to the operator.</p>
+          <p className="mt-2 text-sm text-[#a0a8a0]">Operational controls visible in this source-available edition.</p>
           <div className="mt-4 space-y-2">
             {[
-              "Environment defaults, webhooks, retention, and billing remain structured placeholders.",
+              "Environment defaults, webhook targets, and retention posture are visible from this workspace.",
               "API keys are visible with prefix-only display and revocation state.",
               "Audit activity remains attached to the organization configuration surface.",
             ].map((item) => (

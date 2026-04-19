@@ -3,6 +3,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import {
   requireAuth,
   requireRoleForOrganization,
+  requireScopes,
   type AuthContext,
 } from "../../auth/context";
 import { prisma } from "../../db/prisma";
@@ -61,6 +62,7 @@ export async function registerSettingsRoutes(app: FastifyInstance) {
   app.get("/settings/foundation", async (request, reply) => {
     const auth = await requireAuth(request, reply);
     if (!auth) return;
+    if (!requireScopes(auth, ["settings:read"], reply)) return;
 
     const query = (request.query ?? {}) as SettingsQuery;
     const organizationId = resolveOrganizationId(auth, request, query);
@@ -93,6 +95,7 @@ export async function registerSettingsRoutes(app: FastifyInstance) {
   app.patch("/settings/organization", async (request, reply) => {
     const auth = await requireAuth(request, reply);
     if (!auth) return;
+    if (!requireScopes(auth, ["settings:write"], reply)) return;
     if (auth.kind !== "session") {
       return reply.status(403).send({ error: "Session auth required for organization updates" });
     }
@@ -137,6 +140,7 @@ export async function registerSettingsRoutes(app: FastifyInstance) {
   app.get("/settings/api-keys", async (request, reply) => {
     const auth = await requireAuth(request, reply);
     if (!auth) return;
+    if (!requireScopes(auth, ["api_keys:read"], reply)) return;
 
     const query = (request.query ?? {}) as SettingsQuery;
     const organizationId = resolveOrganizationId(auth, request, query);
@@ -167,6 +171,7 @@ export async function registerSettingsRoutes(app: FastifyInstance) {
   app.post("/settings/api-keys", async (request, reply) => {
     const auth = await requireAuth(request, reply);
     if (!auth) return;
+    if (!requireScopes(auth, ["api_keys:write"], reply)) return;
     if (auth.kind !== "session") {
       return reply.status(403).send({ error: "Session auth required for key management" });
     }
@@ -229,6 +234,7 @@ export async function registerSettingsRoutes(app: FastifyInstance) {
   app.get("/audit", async (request, reply) => {
     const auth = await requireAuth(request, reply);
     if (!auth) return;
+    if (!requireScopes(auth, ["audit:read"], reply)) return;
 
     const query = (request.query ?? {}) as SettingsQuery;
     const organizationId = resolveOrganizationId(auth, request, query);
@@ -269,4 +275,3 @@ export async function registerSettingsRoutes(app: FastifyInstance) {
     };
   });
 }
-
