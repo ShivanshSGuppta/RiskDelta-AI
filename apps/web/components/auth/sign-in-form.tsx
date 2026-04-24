@@ -95,7 +95,7 @@ export function SignInForm() {
             aria-disabled="true"
             className="h-11 justify-start rounded-none border-[#1b1f1b] bg-[#111411] opacity-70"
           >
-            Google SSO (coming soon)
+            Google SSO (not enabled)
           </Button>
           <Button
             type="button"
@@ -104,7 +104,7 @@ export function SignInForm() {
             aria-disabled="true"
             className="h-11 justify-start rounded-none border-[#1b1f1b] bg-[#111411] opacity-70"
           >
-            GitHub SSO (coming soon)
+            GitHub SSO (not enabled)
           </Button>
         </div>
       </div>
