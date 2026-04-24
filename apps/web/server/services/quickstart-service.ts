@@ -79,23 +79,13 @@ export function getQuickstartData({
 
 export async function getQuickstartDataForOrganization({
   organizationId,
-  organizationName,
-  projectSlug,
-  apiKeyPrefix,
 }: {
   organizationId: string;
-  organizationName: string;
-  projectSlug: string;
-  apiKeyPrefix: string;
 }) {
-  try {
-    return await fetchQuickstartApi<ReturnType<typeof getQuickstartData>>({
-      path: `/v1/quickstart?orgId=${organizationId}`,
-      organizationId,
-    });
-  } catch {
-    return getQuickstartData({ organizationName, projectSlug, apiKeyPrefix });
-  }
+  return fetchQuickstartApi<ReturnType<typeof getQuickstartData>>({
+    path: `/v1/quickstart?orgId=${organizationId}`,
+    organizationId,
+  });
 }
 
 export async function verifyQuickstart({

@@ -8,6 +8,37 @@ import { evaluatePolicyDefinition } from "@/server/policies/dsl";
 import { buildToolCallRecords, buildTraceEvaluation } from "@/server/risk/engine";
 import { getActivePolicyDefinitions } from "@/server/services/policy-service";
 
+type TraceListItem = Prisma.TraceGetPayload<{
+  include: {
+    project: true;
+    incident: true;
+  };
+}>;
+
+type TraceDetailItem = Prisma.TraceGetPayload<{
+  include: {
+    project: true;
+    toolCalls: true;
+    riskEvents: true;
+    incident: true;
+    policyRuns: {
+      include: {
+        policyVersion: {
+          include: {
+            policy: true;
+          };
+        };
+        matches: true;
+      };
+    };
+    traceSessionRef: {
+      include: {
+        events: true;
+      };
+    };
+  };
+}>;
+
 function traceExternalId(requestId: string) {
   return `trace_${Date.now().toString(36)}_${hashString(requestId).toString(36).slice(0, 6)}`;
 }
@@ -218,78 +249,6 @@ export async function ingestTrace({
   return getTraceDetail(trace.id, organizationId);
 }
 
-async function listTracesLocal({
-  organizationId,
-  query,
-  verdict,
-  provider,
-  environment,
-  severity,
-}: {
-  organizationId: string;
-  query?: string | null;
-  verdict?: string | null;
-  provider?: string | null;
-  environment?: string | null;
-  severity?: string | null;
-}) {
-  return prisma.trace.findMany({
-    where: {
-      organizationId,
-      verdict: verdict ?? undefined,
-      provider: provider ?? undefined,
-      environment: environment ?? undefined,
-      severity: severity ?? undefined,
-      OR: query
-        ? [
-            { requestId: { contains: query, mode: "insensitive" } },
-            { promptPreview: { contains: query, mode: "insensitive" } },
-            { actor: { contains: query, mode: "insensitive" } },
-            { project: { name: { contains: query, mode: "insensitive" } } },
-          ]
-        : undefined,
-    },
-    include: {
-      project: true,
-      incident: true,
-    },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
-}
-
-async function getTraceDetailLocal(id: string, organizationId: string) {
-  return prisma.trace.findFirst({
-    where: {
-      id,
-      organizationId,
-    },
-    include: {
-      project: true,
-      toolCalls: true,
-      riskEvents: true,
-      incident: true,
-      policyRuns: {
-        include: {
-          policyVersion: {
-            include: {
-              policy: true,
-            },
-          },
-          matches: true,
-        },
-      },
-      traceSessionRef: {
-        include: {
-          events: {
-            orderBy: { createdAt: "asc" },
-          },
-        },
-      },
-    },
-  });
-}
-
 export async function listTraces({
   organizationId,
   query,
@@ -312,37 +271,22 @@ export async function listTraces({
   if (environment) params.set("environment", environment);
   if (severity) params.set("severity", severity);
 
-  try {
-    const payload = await fetchTraceApi<{
-      traces: Awaited<ReturnType<typeof listTracesLocal>>;
-    }>({
-      path: `/v1/traces?${params.toString()}`,
-      organizationId,
-    });
-    return payload.traces as Awaited<ReturnType<typeof listTracesLocal>>;
-  } catch {
-    return listTracesLocal({
-      organizationId,
-      query,
-      verdict,
-      provider,
-      environment,
-      severity,
-    });
-  }
+  const payload = await fetchTraceApi<{
+    traces: TraceListItem[];
+  }>({
+    path: `/v1/traces?${params.toString()}`,
+    organizationId,
+  });
+  return payload.traces;
 }
 
 export async function getTraceDetail(id: string, organizationId: string) {
   const params = new URLSearchParams({ orgId: organizationId });
-  try {
-    const payload = await fetchTraceApi<{
-      trace: Awaited<ReturnType<typeof getTraceDetailLocal>>;
-    }>({
-      path: `/v1/traces/${id}?${params.toString()}`,
-      organizationId,
-    });
-    return payload.trace as Awaited<ReturnType<typeof getTraceDetailLocal>>;
-  } catch {
-    return getTraceDetailLocal(id, organizationId);
-  }
+  const payload = await fetchTraceApi<{
+    trace: TraceDetailItem | null;
+  }>({
+    path: `/v1/traces/${id}?${params.toString()}`,
+    organizationId,
+  });
+  return payload.trace;
 }

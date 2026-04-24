@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getApiPlatformContext } from "@/server/auth/api-context";
 import { getQuickstartDataForOrganization, verifyQuickstart } from "@/server/services/quickstart-service";
-import { getOrganizationSettings } from "@/server/services/settings-service";
 
 export async function GET(request: Request) {
   const context = await getApiPlatformContext();
@@ -11,14 +10,8 @@ export async function GET(request: Request) {
   const preset = searchParams.get("preset");
   const interactive = searchParams.get("interactive") === "1";
 
-  const settings = await getOrganizationSettings(context.organization.id);
-  const firstProject = context.projects[0];
-  const firstKey = settings.apiKeys[0];
   const data = await getQuickstartDataForOrganization({
     organizationId: context.organization.id,
-    organizationName: context.organization.name,
-    projectSlug: firstProject.slug,
-    apiKeyPrefix: firstKey?.prefix ?? "rd_demo",
   });
 
   if (!interactive) {
