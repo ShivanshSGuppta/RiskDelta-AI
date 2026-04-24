@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getApiPlatformContext } from "@/server/auth/api-context";
+import { hasMinimumRole } from "@/server/auth/rbac";
 import { createProject, listProjects } from "@/server/services/project-service";
 
 export async function GET(request: Request) {
@@ -25,6 +26,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const context = await getApiPlatformContext();
   if (!context) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasMinimumRole(context.membership?.role, "OPERATOR")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   try {
     const project = await createProject({

@@ -255,6 +255,7 @@ export async function registerSettingsRoutes(app: FastifyInstance) {
   app.get("/docs/foundation", async (request, reply) => {
     const auth = await requireAuth(request, reply);
     if (!auth) return;
+    if (!requireScopes(auth, ["settings:read", "audit:read"], reply)) return;
 
     const query = (request.query ?? {}) as SettingsQuery;
     const organizationId = resolveOrganizationId(auth, request, query);
