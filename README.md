@@ -1,115 +1,153 @@
-# RiskDelta-AI
+<p align="center">
+  <img src="docs/assets/riskdelta-banner.png" alt="RiskDelta AI Banner" width="100%" />
+</p>
 
-RiskDelta is a multi-tenant AI runtime control plane.
+<h1 align="center">RiskDelta AI</h1>
 
-Public brand:
+<p align="center">
+  Autonomous Risk Intelligence Control Plane for AI Systems, Agents & Copilots
+</p>
 
-- `RiskDelta`
+<p align="center">
+  <img src="https://img.shields.io/badge/runtime-control--plane-black?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/policy-engine-green?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/risk-scoring-blue?style=for-the-badge"/>
+  <img src="https://img.shields.io/badge/tracevault-purple?style=for-the-badge"/>
+</p>
 
-Authenticated product:
+<p align="center">
+  <a href="#-quick-start">🚀 Get Started</a> •
+  <a href="#-architecture">⚙️ Architecture</a> •
+  <a href="#-demo">🎥 Demo</a> •
+  <a href="#-use-cases">🎯 Use Cases</a>
+</p>
 
-- `RiskDelta Console`
+---
 
-This repository is published under `BUSL-1.1`. It is source-available, not open source. See [`LICENSE`](LICENSE) and [`COMMERCIAL.md`](COMMERCIAL.md).
-Plain-English license note: `BUSL-1.1` applies now; on `2029-04-05` it converts to `GPL v2.0 or later`.
+## ⚡ What is RiskDelta?
 
-## What this repo contains
+RiskDelta is an **autonomous runtime control plane for AI systems**.
 
-- `apps/web`: Next.js app for the public site and the source-available console baseline
-- `apps/api`: Fastify API for trace ingestion, workspace setup, and community-safe endpoints
-- `apps/worker`: BullMQ worker for the public runtime pipeline baseline
-- `packages/config`: shared environment validation
-- `packages/types`: shared contracts and edition markers
-- `packages/shared`: shared helpers
-- `packages/sdk-node`: Node SDK for trace ingestion
-- `packages/risk-engine`: source-available baseline risk scoring logic
-- `packages/policy-engine`: source-available baseline policy DSL and evaluator
-- `packages/ui`: shared UI primitives
+As AI shifts from **answering → acting**, risk shifts from **content → execution**.
 
-## What is intentionally not included
+RiskDelta sits between:
+- Users  
+- Models  
+- Agents  
+- External tools  
 
-This public repository does not ship the commercial implementation for:
+…and enforces:
 
-- managed policy authoring and simulation workflows
-- managed runtime control inventory and detail surfaces
-- dedicated risk workstation views
-- incident queueing and remediation workflows
-- enterprise connectors and managed integration verification
+- Policy decisions  
+- Risk scoring per response  
+- Deterministic guardrails  
+- Human approvals  
+- Full audit trails  
 
-Those surfaces are represented in this repo by explicit placeholders, stable interfaces, and edition-aware boundaries. They are not hidden behind obfuscation.
+> **Think: Stripe for AI Risk Infrastructure**
 
-## Architecture
+---
 
-Core runtime chain:
+## 🚨 Problem
 
-1. ingest runtime events
-2. normalize traces and sessions
-3. score risk
-4. evaluate policy
-5. execute runtime actions
-6. preserve evidence for TraceVault
+AI systems today:
+- hallucinate  
+- leak sensitive data  
+- execute unsafe actions  
+- lack auditability  
 
-Commercial workflows that extend this baseline remain outside the public tree.
+Most existing tools focus on **prompt filtering**.
 
-## Local setup
+But real risk happens at the **runtime execution layer**.
 
-Prerequisites:
+---
 
-- Node.js 20+
-- pnpm 10+
-- Docker
+## ✅ Solution
 
-Run locally:
+RiskDelta provides:
+
+- Runtime-level enforcement  
+- Response-level risk scoring  
+- Fail-closed deterministic guardrails  
+- Evidence-backed outputs  
+- Full traceability via TraceVault  
+
+---
+
+## ⚙️ Architecture
+
+<p align="center">
+  <img src="docs/assets/riskdelta-architecture.png" width="90%" />
+</p>
+
+### Core Runtime Flow
+
+1. Ingest runtime events  
+2. Normalize traces and sessions  
+3. Score risk  
+4. Evaluate policy  
+5. Execute runtime enforcement  
+6. Store evidence (TraceVault)  
+
+---
+
+## 🧠 Core Components
+
+| Component | Description |
+|----------|------------|
+| Policy Engine | Deterministic rule evaluation |
+| Risk Scoring Engine | Scores every response |
+| PromptShield | Input validation layer |
+| DataGuard | Sensitive data protection |
+| AgentFence | Agent action control |
+| ModelSwitch | Dynamic model routing |
+| SentinelX | Final verdict engine |
+| TraceVault | Full audit trail storage |
+
+---
+
+## 🎯 Use Cases
+
+- AI copilots in production  
+- Autonomous agents with tool access  
+- Enterprise LLM applications  
+- Internal AI platforms  
+
+### Example
+
+User asks an agent:
+
+> “Delete inactive users from database”
+
+RiskDelta:
+- assigns risk score → **HIGH**  
+- evaluates policy → **REQUIRES APPROVAL**  
+- blocks execution → until approved  
+
+- 🧪 Flow: Runtime → Risk Score → Policy → Action  
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 20+  
+- pnpm 10+  
+- Docker  
+
+### Run locally
 
 ```bash
+git clone https://github.com/your-username/riskdelta
+cd riskdelta
+
 cp .env.example .env
+
 docker compose up -d
-npx pnpm install
-npx pnpm db:generate
-npx pnpm db:push
-npx pnpm db:seed
-npx pnpm dev
-```
 
-Local endpoints:
+pnpm install
+pnpm db:generate
+pnpm db:push
+pnpm db:seed
 
-- Web: `http://localhost:3000`
-- API: `http://localhost:4100/v1`
-- MinIO console: `http://localhost:9001`
-
-## Local UI screenshots
-
-Captured from a live local run (`localhost:3000`) to verify UI rendering and route behavior.
-
-### Integrations marketing page
-
-![RiskDelta integrations page](docs/screenshots/marketing-integrations.png)
-
-### Authenticated console overview
-
-![RiskDelta console overview](docs/screenshots/app-overview.png)
-
-### Real product usage: quickstart runtime flow
-
-![RiskDelta quickstart runtime usage](docs/screenshots/app-quickstart-runtime-usage.png)
-
-### Real product usage: TraceVault working evidence
-
-![RiskDelta TraceVault working](docs/screenshots/app-tracevault-working.png)
-
-## Development commands
-
-```bash
-npx pnpm typecheck
-npx pnpm lint
-npx pnpm test
-npx pnpm build
-npx pnpm secrets:scan
-npx pnpm security:public-env
-```
-
-## Notes
-
-- `.env.example` is the only env file that belongs in git.
-- API keys are hashed at rest and only revealed once on creation in supported flows.
-- Trademarks, logos, and product branding are not licensed for reuse except as required to describe the origin of this repository.
+pnpm dev
